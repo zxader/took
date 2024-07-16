@@ -50,7 +50,12 @@ Took은 20~30대의 효율적인 소비를 돕기 위한 위치 기반 더치페
 ### BackEnd
 ![image](https://github.com/user-attachments/assets/1f4050a3-67df-4b2a-9cfa-ec3cfc94d499)
 
-
+- SpringBoot
+- JPA
+- MySql
+- Docker
+- AWS
+- Jenkins
 
 <br/>
 
