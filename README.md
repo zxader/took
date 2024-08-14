@@ -70,8 +70,9 @@ Took은 20~30대의 효율적인 소비를 돕기 위한 위치 기반 더치페
 - Android
 - Kotlin
 
+<br />
 
-#### CI/CD
+### CI/CD
 - Docker
 - AWS
 - Jenkins
