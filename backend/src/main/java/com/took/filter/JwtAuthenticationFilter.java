@@ -85,7 +85,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter{
             System.out.println("userId "+ userId);
             UserEntity userEntity = userRepository.findByUserId(userId);
             String role = userEntity.getRole();
-//            System.out.println("사용자 역할: " + role);
 
             List<GrantedAuthority> authorities = new ArrayList<>();
             authorities.add(new SimpleGrantedAuthority(role));

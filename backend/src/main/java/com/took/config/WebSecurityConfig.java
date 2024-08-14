@@ -67,6 +67,7 @@ public class WebSecurityConfig {
                 .authorizeHttpRequests(request -> request
                         .requestMatchers("/", "/api/auth/**", "/api/oauth2/**").permitAll()
                         .requestMatchers("/ws/**").permitAll()
+                        .requestMatchers("/api/fcm/**").permitAll()
                         .requestMatchers("/api/user/**").hasRole("USER")
                         .requestMatchers("/api/account/**").hasRole("USER")
                         .requestMatchers("/api/pay/**").hasRole("USER")
@@ -80,7 +81,7 @@ public class WebSecurityConfig {
                         .requestMatchers("/api/sms/**").hasRole("USER")
                         .requestMatchers("/api/navi/**").hasRole("USER")
                         .requestMatchers("/api/taxi/**").hasRole("USER")
-                        .requestMatchers("/api/fcm/**").hasRole("USER")
+
                         .anyRequest().authenticated())
                 .exceptionHandling(exceptionHandling -> exceptionHandling
                         .authenticationEntryPoint(new FailedAuthenticationEntryPoint()))
