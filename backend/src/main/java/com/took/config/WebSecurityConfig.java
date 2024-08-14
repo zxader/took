@@ -37,6 +37,8 @@ public class WebSecurityConfig {
     protected CorsConfigurationSource configurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.addAllowedOrigin("https://i11e205.p.ssafy.io");
+        configuration.addAllowedOrigin("http://localhost:5174");
+        configuration.addAllowedOrigin("http://localhost:5173");
         configuration.addAllowedMethod("GET");    // GET 메서드 허용
         configuration.addAllowedMethod("POST");   // POST 메서드 허용
         configuration.addAllowedMethod("PUT");    // PUT 메서드 허용
