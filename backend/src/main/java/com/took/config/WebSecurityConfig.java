@@ -80,6 +80,7 @@ public class WebSecurityConfig {
                         .requestMatchers("/api/sms/**").hasRole("USER")
                         .requestMatchers("/api/navi/**").hasRole("USER")
                         .requestMatchers("/api/taxi/**").hasRole("USER")
+                        .requestMatchers("/api/fcm/**").hasRole("USER")
                         .anyRequest().authenticated())
                 .exceptionHandling(exceptionHandling -> exceptionHandling
                         .authenticationEntryPoint(new FailedAuthenticationEntryPoint()))
