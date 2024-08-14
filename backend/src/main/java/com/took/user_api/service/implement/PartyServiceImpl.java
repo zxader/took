@@ -611,6 +611,18 @@ public class PartyServiceImpl implements PartyService {
                         .build();
                 payRepository.save(pay);
 
+                // 결제 내역 추가 (송금 )
+                PayEntity pay2 = PayEntity.builder()
+                        .user(leader)
+                        .targetUserSeq(userEntity.getUserSeq())
+                        .account(accountRepository.findByUserAndMainTrue(leader))
+                        .createdAt(LocalDateTime.now())
+                        .cost(exchange)
+                        .receive(false)
+                        .category(2)
+                        .build();
+                payRepository.save(pay2);
+
                 fcmService.sendMessage(
                         MessageRequest.builder()
                                 .title("택시 결제 알림")
