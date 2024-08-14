@@ -82,6 +82,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter{
                 return;
             }
 
+            System.out.println("userId "+ userId);
             UserEntity userEntity = userRepository.findByUserId(userId);
             String role = userEntity.getRole();
 //            System.out.println("사용자 역할: " + role);
