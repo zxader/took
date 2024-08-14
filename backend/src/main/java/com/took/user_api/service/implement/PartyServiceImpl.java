@@ -555,7 +555,10 @@ public class PartyServiceImpl implements PartyService {
         for (FinalTaxiPartyRequest.User user : requestBody.getUsers()) {
             UserEntity userEntity = userRepository.findById(user.getUserSeq()).orElseThrow();
             MemberEntity member = memberRepository.findByPartyAndUser(party, userEntity);
-            if (member.isLeader()) continue; // 결제자는 패스
+            if (member.isLeader()) {
+                member.updateCost(user.getCost());
+                continue; // 결제자는 패스
+            }
 
             member.updateCost(user.getCost());
             long fakecost = member.getFakeCost();
