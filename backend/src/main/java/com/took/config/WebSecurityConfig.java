@@ -63,6 +63,7 @@ public class WebSecurityConfig {
                         .sessionRegistry(sessionRegistry()))
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers("/", "/login", "/signup").permitAll()
+                        .requestMatchers("/api/fcm/**").permitAll()
                 )
                 .authorizeHttpRequests(request -> request
                         .requestMatchers("/", "/api/auth/**", "/api/oauth2/**").permitAll()
