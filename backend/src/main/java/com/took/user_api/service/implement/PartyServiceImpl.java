@@ -685,7 +685,6 @@ public class PartyServiceImpl implements PartyService {
     @Transactional
     @Override
     public ResponseEntity<? super ojResponseDto> restCostPay(OnlyJungsanRequestDto requestBody) {
-        System.out.println("택시 잔돈 정산 요청");
         PartyEntity party = partyRepository.findById(requestBody.getPartySeq()).orElseThrow();
         UserEntity user = userRepository.findById(requestBody.getUserSeq()).orElseThrow();
         MemberEntity member = memberRepository.findByPartyAndUser(party, user);
