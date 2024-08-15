@@ -1,4 +1,4 @@
-## Took(툭!)
+## took(툭!)
 
 ![툭배너](/uploads/ffe33dab30f2d837dc68537d7d844f84/image.png)
 
