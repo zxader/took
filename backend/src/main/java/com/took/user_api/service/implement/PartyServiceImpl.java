@@ -685,6 +685,7 @@ public class PartyServiceImpl implements PartyService {
     @Transactional
     @Override
     public ResponseEntity<? super ojResponseDto> restCostPay(OnlyJungsanRequestDto requestBody) {
+        System.out.println("택시 잔돈 정산 요청");
         PartyEntity party = partyRepository.findById(requestBody.getPartySeq()).orElseThrow();
         UserEntity user = userRepository.findById(requestBody.getUserSeq()).orElseThrow();
         MemberEntity member = memberRepository.findByPartyAndUser(party, user);
@@ -860,13 +861,17 @@ public class PartyServiceImpl implements PartyService {
                 maskedName = maskedName.charAt(0) + "**" + maskedName.charAt(maskedName.length() - 1);
             }
 
+            Long cost = member.getCost();
+            if(party.getCategory() == 2) {
+                cost = member.getRestCost();
+            }
             responseList.add(
                     new NoPayResponseDto(
                             party.getPartySeq(),
                             leaderUser.getUserSeq(),
                             maskedName,
                             leaderUser.getImageNo(),
-                            member.getCost(),
+                            cost,
                             party.getCategory(),
                             party.getCreatedAt()
                     )
