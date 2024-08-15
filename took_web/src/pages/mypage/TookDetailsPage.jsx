@@ -63,6 +63,18 @@ function TookDetailsPage() {
   const [popupMember, setPopupMember] = useState(null); // 팝업용 멤버 상태 추가
   const [senderName, setSenderName] = useState('');
 
+    // 이름을 마스킹하는 함수
+  const maskName = (name) => {
+    if (name.length > 2) {
+      // 세 글자 이상인 경우
+      return name[0] + '*'.repeat(name.length - 2) + name[name.length - 1];
+    } else if (name.length === 2) {
+      // 두 글자인 경우
+      return name[0] + '*';
+    }
+    return name; // 그 외의 경우 (한 글자 등) 그대로 반환
+  };
+
   useEffect(() => {
     const fetchPartys = async () => {
       try {
@@ -83,20 +95,32 @@ function TookDetailsPage() {
           };
           setParty(party);
 
-          const partyList = response.partyDetailList.map((member) => ({
-            memberSeq: member.memberSeq,
-            name: member.user.userName,
-            imageNo: member.user.imageNo,
-            orderAmount: member.cost,
-            fakeCost: member.fakeCost, // 택시 - 가결제 금액
-            amount: member.cost + (party.deliveryTip || 0) / party.totalMember,
-            status: member.leader || member.status ? '완료' : '미완료',
-            isLeader: member.leader,
-            isCompleted: member.status,
-            userSeq: member.user.userSeq,
-            createdAt: member.createdAt,
-            isMe: member.user.userSeq === seq,
-          }));
+          const partyList = response.partyDetailList.map((member) => {
+            let amount = member.cost + (party.deliveryTip || 0) / party.totalMember;
+            
+            if (amount % 1 !== 0) {  // amount가 소수일 때
+              if (member.leader) {
+                amount = Math.floor(amount);  // 리더일 경우 버림
+              } else {
+                amount = Math.ceil(amount);   // 리더가 아닐 경우 올림
+              }
+            }
+          
+            return {
+              memberSeq: member.memberSeq,
+              name: member.user.userName,
+              imageNo: member.user.imageNo,
+              orderAmount: member.cost,
+              fakeCost: member.fakeCost, // 택시 - 가결제 금액
+              amount: amount,
+              status: member.leader || member.status ? '완료' : '미완료',
+              isLeader: member.leader,
+              isCompleted: member.status,
+              userSeq: member.user.userSeq,
+              createdAt: member.createdAt,
+              isMe: member.user.userSeq === seq,
+            };
+          });
           setUsers(partyList);
 
           const currentUser = partyList.find((user) => user.isMe);
@@ -120,28 +144,29 @@ function TookDetailsPage() {
 
   const renderUserDetails = (user, index) => {
     const isCompleted = user.status === '완료';
+    const maskedName = maskName(user.name); // 마스킹된 이름 사용
     return (
       <div key={user.name} className="mb-4">
         <div className="flex items-center mb-3">
           <img
             src={getProfileImagePath(user.imageNo)}
-            alt={user.name}
+            alt={maskedName}
             className="w-9 h-9 mr-4"
           />
           <div className="flex-grow flex justify-between items-center">
             <div className="flex items-center">
-              <span>{user.name}</span>
+              <span>{maskedName}</span>
               {user.isMe && (
                 <img src={isMeIcon} alt="본인" className="ml-2 w-9.5 h-5" />
               )}
-              {(party.category === 4) | (party.category === 2) &&
+              {(party.category === 4) || (party.category === 2) &&
                 !user.isLeader &&
                 !user.isCompleted &&
                 isLeader && (
                   <FaBell
                     className="ml-2 text-yellow-400 cursor-pointer"
                     onClick={() => {
-                      setPopupUserName(user.name);
+                      setPopupUserName(maskedName);
                       setPopupMember(user);
                     }}
                   />

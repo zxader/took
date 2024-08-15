@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom'; // useNavigate 추가
 import BackButton from '../../components/common/BackButton';
 import CheckExpectedCost from '../../components/taxi/CheckExpectedCost';
@@ -21,6 +21,7 @@ function TaxiChattingSettingPage() {
   } = useLocation();
   const navigate = useNavigate(); // navigate 추가
   const [destinations, setDestinations] = useState([]);
+  const [uniqueDestination, setUniqueDestination] = useState([]);
   const [paymentUser, setPaymentUser] = useState('');
   const [userCount, setUserCount] = useState(taxiParty.max - 1);
   const [genderPreference, setGenderPreference] = useState(
@@ -35,38 +36,46 @@ function TaxiChattingSettingPage() {
   const { seq: currentUserSeq } = useUser();
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        // 1. 모든 택시 파티 멤버 조회
-        const members = await getAllTaxiPartyMembersApi(taxiSeq);
-
-        // 1-1. routeRank로 정렬
-        const sortedMembers = members.sort((a, b) => a.routeRank - b.routeRank);
-        setDestinations(sortedMembers);
-
-        // 2. 현재 사용자 정보 가져오기
-        const userInfo = await getUserInfoApi({ userSeq: currentUserSeq });
-        setCurrentUser(userInfo);
-
-        // 3. 각 멤버의 정보 가져오기 (프로필 이미지 및 이름)
-        const userInfoMap = {};
-        for (const member of members) {
-          const info = await getUserInfoApi({ userSeq: member.userSeq });
-          userInfoMap[member.userSeq] = info;
-        }
-        setUserInfos(userInfoMap);
-
-        // 초기 결제자 설정
-        if (members.length > 0) {
-          setPaymentUser(taxiParty.master);
-        }
-      } catch (error) {
-        console.error('Error fetching data:', error);
-      }
-    };
-
     fetchData();
   }, [taxiSeq, currentUserSeq]);
+
+  const fetchData = async () => {
+    try {
+      // 1. 모든 택시 파티 멤버 조회
+      const members = await getAllTaxiPartyMembersApi(taxiSeq);
+      console.log(members);
+      // 1-1. routeRank로 정렬
+      const sortedMembers = members.sort((a, b) => a.routeRank - b.routeRank);
+      console.log(sortedMembers);
+      // 위도와 경도가 같은 사용자를 필터링하여 한 명만 남김
+      const uniqueDestinations = sortedMembers.filter((item, index, self) =>
+        index === self.findIndex((t) => (
+          t.destiLat === item.destiLat && t.destiLon === item.destiLon
+        ))
+      );
+      setDestinations(sortedMembers);
+      setUniqueDestination(uniqueDestinations);
+
+      // 2. 현재 사용자 정보 가져오기
+      const userInfo = await getUserInfoApi({ userSeq: currentUserSeq });
+      setCurrentUser(userInfo);
+
+      // 3. 각 멤버의 정보 가져오기 (프로필 이미지 및 이름)
+      const userInfoMap = {};
+      for (const member of members) {
+        const info = await getUserInfoApi({ userSeq: member.userSeq });
+        userInfoMap[member.userSeq] = info;
+      }
+      setUserInfos(userInfoMap);
+
+      // 초기 결제자 설정
+      if (members.length > 0) {
+        setPaymentUser(taxiParty.master);
+      }
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    }
+  };
 
   const onDragStart = (e, index) => {
     e.dataTransfer.effectAllowed = 'move';
@@ -95,26 +104,96 @@ function TaxiChattingSettingPage() {
     setDraggingIndex(null);
   };
 
+  // 경로바꾸기
+  const [firstTouch, setFirstTouch] = useState(null);
+  const [secondTouch, setSecondTouch] = useState(null);
+  const [firstCheck, setFirstCheck] = useState(false);
+  const [secondCheck, setSecondCheck] = useState(false);
+
+  useEffect(() => {
+    if (firstTouch !== null && secondTouch !== null) {
+      swapPositions(firstTouch, secondTouch);
+      // 초기화
+      setFirstCheck(false);
+      setSecondCheck(false);
+      setFirstTouch(null);
+      setSecondTouch(null);
+    }
+  }, [firstTouch, secondTouch]); // firstTouch와 secondTouch가 모두 설정되면 위치를 교환
+
+  const onTouchStart = (e, index) => {
+    if (!firstCheck) {
+      setFirstTouch(index); // 첫 번째 터치 저장
+      setFirstCheck(true);
+    } else if (!secondCheck) {
+      setSecondTouch(index); // 두 번째 터치 저장
+      setSecondCheck(true);
+    }
+  };
+  
+  // 두 요소의 위치를 교환하는 함수
+const swapPositions = (index1, index2) => {
+  const tempDestinations = [...uniqueDestination];
+  const temp = tempDestinations[index1];
+  tempDestinations[index1] = tempDestinations[index2];
+  tempDestinations[index2] = temp;
+
+  // setUniqueDestination으로 uniqueDestination 상태 업데이트
+  setUniqueDestination(tempDestinations);
+
+  // 원래 배열인 destinations에서 순서를 반영
+  const updatedDestinations = [...destinations];
+  // 변경된 uniqueDestination의 각 항목에 대해 원래 destinations 배열에서 순서 변경
+  const userSeq1 = tempDestinations[index1].userSeq;
+  const userSeq2 = tempDestinations[index2].userSeq;
+  // userSeq1과 userSeq2에 해당하는 원래 배열의 인덱스를 찾음
+  const originalIndex1 = updatedDestinations.findIndex((item) => item.userSeq === userSeq1);
+  const originalIndex2 = updatedDestinations.findIndex((item) => item.userSeq === userSeq2);
+  // 위치가 변경된 두 사용자의 routeRank를 서로 교환
+  const tempRank = updatedDestinations[originalIndex1].routeRank;
+  updatedDestinations[originalIndex1].routeRank = updatedDestinations[originalIndex2].routeRank;
+  updatedDestinations[originalIndex2].routeRank = tempRank;
+
+  // 같은 위도와 경도를 가진 다른 사용자들의 routeRank도 일치하도록 설정
+  const { destiLat: lat1, destiLon: lon1, routeRank: rank1 } = updatedDestinations[originalIndex1];
+  const { destiLat: lat2, destiLon: lon2, routeRank: rank2 } = updatedDestinations[originalIndex2];
+
+  for (let i = 0; i < updatedDestinations.length; i++) {
+    if (updatedDestinations[i].destiLat === lat1 && updatedDestinations[i].destiLon === lon1) {
+      updatedDestinations[i].routeRank = rank1;
+    } else if (updatedDestinations[i].destiLat === lat2 && updatedDestinations[i].destiLon === lon2) {
+      updatedDestinations[i].routeRank = rank2;
+    }
+  }
+  console.log(updatedDestinations)
+
+  // setDestinations로 destinations 상태 업데이트
+  setDestinations(updatedDestinations);
+};
+
   const handleCheckExpectedCost = async () => {
     try {
-      const locations = [
-        { lat: latitude, lon: longitude }, // 현재 위치를 첫번째로 추가
-        ...destinations.map((dest) => ({
-          lat: dest.destiLat,
-          lon: dest.destiLon,
-        })),
-      ];
+      // destinations 배열을 routeRank 기준으로 정렬
+    const sortedDestinations = [...destinations].sort((a, b) => a.routeRank - b.routeRank);
 
-      const users = destinations.map((dest) => ({
-        userSeq: dest.userSeq,
-        cost: dest.cost,
-      }));
+    const locations = [
+      { lat: latitude, lon: longitude }, // 현재 위치를 첫 번째로 추가
+      ...sortedDestinations.map((dest) => ({
+        lat: dest.destiLat,
+        lon: dest.destiLon,
+      })),
+    ];
+
+    const users = sortedDestinations.map((dest) => ({
+      userSeq: dest.userSeq,
+      cost: dest.cost,
+    }));
 
       const params = {
         locations,
         users,
       };
-
+      console.log(params)
       const result = await calculateTotalExpectedCostApi(params);
       console.log('result: ', result);
       setTotalExpectedCost(result);
@@ -145,17 +224,17 @@ function TaxiChattingSettingPage() {
       console.log('Update response:', updateResponse); // API 응답 확인
 
       console.log('destinations :', destinations);
+      const sortedDestinations = [...destinations].sort((a, b) => a.routeRank - b.routeRank);
       // 2. 목적지 순서 설정 API 호출
-      for (let i = 0; i < destinations.length; i++) {
+      for (let i = 0; i < sortedDestinations.length; i++) {
         const rankParams = {
           taxiSeq,
-          destiName: destinations[i].destiName,
-          routeRank: i + 1,
+          destiName: sortedDestinations[i].destiName,
+          routeRank: sortedDestinations[i].routeRank,
         };
         console.log('Rank params: ', rankParams); // API 호출 전 파라미터 확인
         const rankResponse = await setDestinationRankApi(rankParams);
       }
-
       console.log('All API calls successful, navigating...');
       // API 호출이 성공하면 채팅 페이지로 이동
       navigate(`/chat/taxi/${taxiParty.roomSeq}`, {
@@ -193,19 +272,16 @@ function TaxiChattingSettingPage() {
             경로 목록
           </label>
           <div className="mt-1 border border-neutral-100 rounded-xl bg-neutral-100 p-2 shadow-md">
-            {destinations.map((item, index) => (
+            {uniqueDestination.map((item, index) => (
               <div key={index}>
                 <div
-                  className={`flex items-center p-2 rounded-md cursor-grab transition duration-200 relative ${
-                    draggingIndex === index
-                      ? 'bg-neutral-300 opacity-50'
-                      : 'bg-neutral-100'
-                  }`}
-                  draggable
-                  onDragStart={(e) => onDragStart(e, index)}
-                  onDragOver={() => onDragOver(index)}
-                  onDragEnd={onDragEnd}
-                >
+                className={`flex items-center p-2 rounded-md cursor-pointer transition duration-200 relative ${
+                  firstTouch === index || secondTouch === index
+                    ? 'bg-neutral-300 opacity-50'
+                    : 'bg-neutral-100'
+                }`}
+                onTouchStart={(e) => onTouchStart(e, index)}
+              >
                   <div className="flex flex-col items-center w-16">
                     <img
                       src={getProfileImagePath(

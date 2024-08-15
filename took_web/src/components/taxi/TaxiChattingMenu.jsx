@@ -26,6 +26,7 @@ const TaxiChattingMenu = ({
   taxiStatus,
   setTaxiStatus, // 상태 변경 함수 받기
   handleMenuToggle,
+  setPartySeq,
 }) => {
   const { seq: currentUserSeq } = useUser();
   const [userInfos, setUserInfos] = useState({});
@@ -34,6 +35,7 @@ const TaxiChattingMenu = ({
   const [modalMessageLine2, setModalMessageLine2] = useState('');
   const [modalType, setModalType] = useState('');
   const [showModal, setShowModal] = useState(false);
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -57,6 +59,7 @@ const TaxiChattingMenu = ({
       }, {});
 
       setUserInfos(userInfoMap);
+      setLoading(true);
     };
 
     fetchUserInfos();
@@ -133,9 +136,10 @@ const TaxiChattingMenu = ({
           startLon: longitude,
           taxiSeq: taxiParty.taxiSeq,
         };
-
+        
         // 택시 정산 파티 생성(가결제시) 가결제 실패시 -1 반환
         const partyResponse = await makeTaxiPartyApi(partyParams);
+        setPartySeq(partyResponse)
         console.log('택시 정산 partyseq:', partyResponse);
         // 나가기 버튼 클릭시
       } else if (modalType === 'leaveChat') {
@@ -196,7 +200,9 @@ const TaxiChattingMenu = ({
       state: { taxiSeq: taxiParty.taxiSeq, taxiParty },
     });
   };
-
+  if(!loading) {
+    <div>Loading...</div>
+  }
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-end z-50">
       <div className="w-4/5 h-full bg-white shadow-md p-4 relative">
