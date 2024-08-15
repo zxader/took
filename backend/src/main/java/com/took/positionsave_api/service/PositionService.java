@@ -93,7 +93,8 @@ public class PositionService {
                         double distance = calculateDistance(
                                 request.getLat(), request.getLon(),
                                 user.getLat(), user.getLon());
-
+                        System.out.println("distance: " + distance);
+                        System.out.println("distanceThreshold" + distanceThreshold);
                         if (distance <= distanceThreshold) { // 거리 범위를 1000m로 설정
                             PositionUserListResponse response = new PositionUserListResponse();
                             // userSeq를 Long으로 변환
@@ -109,6 +110,9 @@ public class PositionService {
                             return response;
                         }
                     }
+                    System.out.println("거리가 초과: " + user.getUserSeq());
+                    System.out.println("태훈이형: " + request.getLat() + " " + request.getLon());
+                    System.out.println("희수: " + user.getLat() + " " + user.getLon());
                     return null; // userSeq가 null인 경우 또는 거리가 1000m를 초과하는 경우
                 })
                 .filter(Objects::nonNull) // null 값 필터링
